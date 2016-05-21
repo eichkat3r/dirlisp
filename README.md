@@ -46,3 +46,5 @@ which will print the result on the command line.
 * exception handling, syntax checking
 * lambda functions, functional programming stuff (map, fold, filter)
 * macros, includes
+* lists
+* control flow (cond, if)

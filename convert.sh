@@ -26,17 +26,16 @@ while getopts ":i:o:" OPT; do
 done
 
 if [[ -z $INPUT ]]; then
-    INPUT="$@"
+    INPUT=$(cat "$@")
 fi
 
 if [[ -z $INPUT ]]; then
-    echo "$INPUT"
     echo "No input specified." >&2
     exit
 fi
 
 set -f
-TOKENS=$(echo $INPUT | grep -o "+\|-\|*\|/\|(\|)\|[0-9]*")
+TOKENS=$(echo $INPUT | grep -o "+\|-\|*\|/\|<=\|>=\|<\|>\|(\|)\|[[:digit:]]*\|[[:alpha:]][[:alnum:]]*")
 unset -f
 
 rm -rf "$OUTPUT"
@@ -45,35 +44,57 @@ cd "$OUTPUT"
 
 ID=0
 
+# create an operator directory
+function write_op {
+    mkdir "${ID}_${1}"
+    cd "${ID}_${1}"
+    (( ID++ ))
+}
+
 for T in $TOKENS; do
     case $T in
+    # special char replacement
     "+")
-        mkdir "${ID}_add"
-        cd "${ID}_add"
-        (( ID++ ))
+        write_op "add"
         ;;
     "-")
-        mkdir "${ID}_sub"
-        cd "${ID}_sub"
-        (( ID++ ))
+        write_op "sub"
         ;;
     "*")
-        mkdir "${ID}_mul"
-        cd "${ID}_mul"
-        (( ID++ ))
+        write_op "mul"
         ;;
     "/")
-        mkdir "${ID}_div"
-        cd "${ID}_div"
-        (( ID++ ))
+        write_op "div"
+        ;;
+    "<=")
+        write_op "lte"
+        ;;
+    "<")
+        write_op "lt"
+        ;;
+    ">=")
+        write_op "gte"
+        ;;
+    ">")
+        write_op "gt"
+        ;;
+    "(")
         ;;
     ")")
         cd ..
         ;;
-    [0-9]*)
+    [[:alpha:]][[:alnum:]]*)
+        write_op "$T"
+        ;;
+    [[:digit:]]*)
         touch "${ID}_val"
         echo "$T" > "${ID}_val"
         (( ID++ ))
+        ;;
+    [[:space:]])
+        ;;
+    *)
+        echo "Unknown symbol $T"
         ;;
     esac
 done

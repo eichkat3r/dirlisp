@@ -65,28 +65,74 @@ function traverse {
         OPERANDS+=("$VALUE")
     done
     
-    # evaluate current directory by folding all values
-    RESULT=${OPERANDS[0]}
+    ### evaluate current directory by folding all values ###
     
-    for OPERAND in ${OPERANDS[@]:1}; do
-        case $TL_DIR_OP in
-        "add")
-            RESULT=$(echo "$RESULT+$OPERAND" | bc -l)
-            ;;
-        "sub")
-            RESULT=$(echo "$RESULT-$OPERAND" | bc -l)
-            ;;
-        "mul")
-            RESULT=$(echo "$RESULT*$OPERAND" | bc -l)
-            ;;
-        "div")
-            RESULT=$(echo "$RESULT/$OPERAND" | bc -l)
-            ;;
-        esac
-    done
+    case $TL_DIR_OP in
+    # number of operands >= 2
+    "add"|"sub"|"mul"|"div")
+        RESULT=${OPERANDS[0]}
+        
+        for OPERAND in ${OPERANDS[@]:1}; do
+            case $TL_DIR_OP in
+            "add")
+                RESULT=$(echo "$RESULT+$OPERAND" | bc -l)
+                ;;
+            "sub")
+                RESULT=$(echo "$RESULT-$OPERAND" | bc -l)
+                ;;
+            "mul")
+                RESULT=$(echo "$RESULT*$OPERAND" | bc -l)
+                ;;
+            "div")
+                RESULT=$(echo "$RESULT/$OPERAND" | bc -l)
+                ;;
+            esac
+        done
+        ;;
     
+    # unary operators
+    "not")
+        RESULT=$(echo "!${OPERANDS[0]}" | bc -l)
+        ;;
+    "sqrt")
+        RESULT=$(echo "sqrt(${OPERANDS[0]})" | bc -l)
+        ;;
+    
+    # binary operators
+    "lte")
+        RESULT=$(echo "${OPERANDS[0]}<=${OPERANDS[1]}" | bc -l)
+        ;;
+    "lt")
+        RESULT=$(echo "${OPERANDS[0]}<${OPERANDS[1]}" | bc -l)
+        ;;
+    "gte")
+        RESULT=$(echo "${OPERANDS[0]}>=${OPERANDS[1]}" | bc -l)
+        ;;
+    "gt")
+        RESULT=$(echo "${OPERANDS[0]}>${OPERANDS[1]}" | bc -l)
+        ;;
+    "eq")
+        RESULT=$(echo "${OPERANDS[0]}==${OPERANDS[1]}" | bc -l)
+        ;;
+    "or")
+        RESULT=$(echo "${OPERANDS[0]}||${OPERANDS[1]}" | bc -l)
+        ;;
+    "and")
+        RESULT=$(echo "${OPERANDS[0]}&&${OPERANDS[1]}" | bc -l)
+        ;;
+    
+    # ternary operators
+    "if")
+        CONDITION=${OPERANDS[0]}
+        if [[ $CONDITION != "0" ]]; then
+            RESULT=${OPERANDS[1]}
+        else
+            RESULT=${OPERANDS[2]}
+        fi
+        ;;
+    esac
+
     cd ..
-    
     echo "$RESULT"
 }
 
