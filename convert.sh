@@ -36,7 +36,7 @@ if [[ -z $INPUT ]]; then
 fi
 
 set -f
-TOKENS=$(echo $INPUT | grep -o "+\|-\|(\|)\|[0-9]*\|\*")
+TOKENS=$(echo $INPUT | grep -o "+\|-\|*\|/\|(\|)\|[0-9]*")
 unset -f
 
 rm -rf "$OUTPUT"
