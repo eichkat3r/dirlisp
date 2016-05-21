@@ -4,12 +4,15 @@
 # converts an arbitrary arithmetic expression to a directory structure
 
 INPUT=
+OUTPUT="a.out"
 
-while getopts ":i:" OPT; do
+while getopts ":i:o:" OPT; do
     case $OPT in
     i)
         INPUT="$OPTARG"
-        echo "$INPUT"
+        ;;
+    o)
+        OUTPUT="$OPTARG"
         ;;
     \?)
         echo "Unknown option -$OPTARG" >&2
@@ -36,8 +39,9 @@ set -f
 TOKENS=$(echo $INPUT | grep -o "+\|-\|(\|)\|[0-9]*\|\*")
 unset -f
 
-mkdir root
-cd root
+rm -rf "$OUTPUT"
+mkdir "$OUTPUT"
+cd "$OUTPUT"
 
 ID=0
 

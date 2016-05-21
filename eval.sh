@@ -3,11 +3,35 @@
 # ba_eval.sh
 # evaluates a bash arithmetics expression
 
-CWD=.
+INPUT=
 
-cd $CWD
-cd root
+while getopts ":i:" OPT; do
+    case $OPT in
+    i)
+        INPUT="$OPTARG"
+        ;;
+    \?)
+        echo "Unknown option -$OPTARG" >&2
+        exit
+        ;;
+    :)
+        echo "No argument given for -$OPTARG" >&2
+        exit
+        ;;
+    esac
+done
 
+if [[ -z $INPUT ]]; then
+    INPUT="$@"
+fi
+
+if [[ -z $INPUT ]]; then
+    echo "$INPUT"
+    echo "No input specified." >&2
+    exit
+fi
+
+cd "$INPUT"
 
 function traverse {
     TL_DIR="$1"
@@ -17,7 +41,7 @@ function traverse {
     
     OPERANDS=()
     
-    FILES=$(find . -maxdepth 1 -mindepth 1 -printf '%f\n')
+    FILES=$(find . -maxdepth 1 -mindepth 1 -printf '%f\n' | sort -n)
     
     for FILE in $FILES; do
         VALUE=
@@ -56,7 +80,7 @@ function traverse {
 }
 
 
-DIRS=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n')
+DIRS=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort -n)
 
 for DIR in $DIRS; do
     traverse $DIR
