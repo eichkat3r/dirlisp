@@ -60,16 +60,16 @@ function traverse {
     for OPERAND in ${OPERANDS[@]:1}; do
         case $TL_DIR_OP in
         "add")
-            (( RESULT+=OPERAND ))
+            RESULT=$(echo "$RESULT+$OPERAND" | bc -l)
             ;;
         "sub")
-            (( RESULT-=OPERAND ))
+            RESULT=$(echo "$RESULT-$OPERAND" | bc -l)
             ;;
         "mul")
-            (( RESULT*=OPERAND ))
+            RESULT=$(echo "$RESULT*$OPERAND" | bc -l)
             ;;
         "div")
-            (( RESULT/=OPERAND ))
+            RESULT=$(echo "$RESULT/$OPERAND" | bc -l)
             ;;
         esac
     done
