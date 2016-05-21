@@ -22,11 +22,11 @@ while getopts ":i:" OPT; do
     esac
 done
 
-if [ -z "$INPUT" ]; then
+if [[ -z $INPUT ]]; then
     INPUT="$@"
 fi
 
-if [ -z "$INPUT" ]; then
+if [[ -z $INPUT ]]; then
     echo "$INPUT"
     echo "No input specified." >&2
     exit

@@ -8,52 +8,56 @@ CWD=.
 cd $CWD
 cd root
 
-RESULT=
 
-function evaluate {
-    cd $1
+function traverse {
+    TL_DIR="$1"
+    cd "$TL_DIR"
+    TL_DIR_ID=$(echo "$TL_DIR" | cut -d"_" -f1)
+    TL_DIR_OP=$(echo "$TL_DIR" | cut -d"_" -f2)
     
-    local OP=$(echo $DIR | cut -f2 -d'_')
-    local DIRS=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n')
-    local OPERANDS=()
+    OPERANDS=()
     
-    if [ -n "$DIRS" ]; then
-        for DIR in $DIRS; do
-            DIRVAL=$(evaluate "$DIR")
-            OPERANDS+=("$DIRVAL")
-        done
-    fi
+    FILES=$(find . -maxdepth 1 -mindepth 1 -printf '%f\n')
     
-    local FILES=$(find . -maxdepth 1 -mindepth 1 -type f -printf '%f\n')
+    for FILE in $FILES; do
+        VALUE=
+        
+        if [[ -d $FILE ]]; then
+            VALUE=$(traverse "$FILE")
+        else
+            VALUE=$(cat "$FILE")
+        fi
+        
+        OPERANDS+=("$VALUE")
+    done
     
-    if [ -n "$FILES" ]; then
-        for FILE in "$FILES"; do
-            O="$(cat $FILE)"
-            OPERANDS+=("$O")
-        done
-    fi
+    RESULT=${OPERANDS[0]}
     
-    RESULT=0
+    for OPERAND in ${OPERANDS[@]:1}; do
+        case $TL_DIR_OP in
+        "add")
+            (( RESULT+=OPERAND ))
+            ;;
+        "sub")
+            (( RESULT-=OPERAND ))
+            ;;
+        "mul")
+            (( RESULT*=OPERAND ))
+            ;;
+        "div")
+            (( RESULT/=OPERAND ))
+            ;;
+        esac
+    done
     
-    case "$OP" in
-    "add")
-        RESULT=${OPERANDS[0]}
-        ;;
-    "sub")
-        RESULT=${OPERANDS[0]}
-        ;;
-    "div")
-        ;;
-    "mul")
-        RESULT=${OPERANDS[0]}
-        ;;
-    esac
+    cd ..
     
-    echo $RESULT
+    echo "$RESULT"
 }
+
 
 DIRS=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n')
 
 for DIR in $DIRS; do
-    evaluate $DIR
+    traverse $DIR
 done
