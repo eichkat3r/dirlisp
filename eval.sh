@@ -3,7 +3,10 @@
 # ba_eval.sh
 # evaluates a bash arithmetics expression
 
+
 INPUT=
+
+### handle command line arguments ###
 
 while getopts ":i:" OPT; do
     case $OPT in
@@ -31,11 +34,16 @@ if [[ -z $INPUT ]]; then
     exit
 fi
 
+
+
 cd "$INPUT"
 
+# evaluate the file tree recursively
 function traverse {
+    # function takes directory name as argument
     TL_DIR="$1"
     cd "$TL_DIR"
+    # split name into id and operator
     TL_DIR_ID=$(echo "$TL_DIR" | cut -d"_" -f1)
     TL_DIR_OP=$(echo "$TL_DIR" | cut -d"_" -f2)
     
@@ -46,8 +54,10 @@ function traverse {
     for FILE in $FILES; do
         VALUE=
         
+        # directories will be evaluated (recursion)
         if [[ -d $FILE ]]; then
             VALUE=$(traverse "$FILE")
+        # files = leaves in syntax tree
         else
             VALUE=$(cat "$FILE")
         fi
@@ -55,6 +65,7 @@ function traverse {
         OPERANDS+=("$VALUE")
     done
     
+    # evaluate current directory by folding all values
     RESULT=${OPERANDS[0]}
     
     for OPERAND in ${OPERANDS[@]:1}; do
