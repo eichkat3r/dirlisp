@@ -125,10 +125,17 @@ function traverse {
     "if")
         CONDITION=${OPERANDS[0]}
         if [[ $CONDITION != "0" ]]; then
-            RESULT=${OPERANDS[1]}
+            RESULT="${OPERANDS[1]}"
         else
-            RESULT=${OPERANDS[2]}
+            RESULT="${OPERANDS[2]}"
         fi
+        ;;
+    
+    # lists
+    "list")
+        RESULT="${OPERANDS[@]}"
+        ;;
+    *)
         ;;
     esac
 

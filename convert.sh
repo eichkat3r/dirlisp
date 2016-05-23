@@ -44,11 +44,14 @@ cd "$OUTPUT"
 
 ID=0
 
+LIST=false
+
 # create an operator directory
 function write_op {
     mkdir "${ID}_${1}"
     cd "${ID}_${1}"
     (( ID++ ))
+    LIST=false
 }
 
 for T in $TOKENS; do
@@ -79,6 +82,7 @@ for T in $TOKENS; do
         write_op "gt"
         ;;
     "(")
+        LIST=true
         ;;
     ")")
         cd ..
@@ -86,9 +90,16 @@ for T in $TOKENS; do
     [[:alpha:]][[:alnum:]]*)
         write_op "$T"
         ;;
-    [[:digit:]]*)
-        touch "${ID}_val"
-        echo "$T" > "${ID}_val"
+    # symbols
+    [[:digit:]]*|\'[[:alnum:]]*)
+        if [[ $LIST == true ]]; then
+            mkdir "${ID}_list"
+            cd "${ID}_list"
+            (( ID++ ))
+            LIST=false
+        fi
+        touch "${ID}_sym"
+        echo "$T" > "${ID}_sym"
         (( ID++ ))
         ;;
     [[:space:]])
