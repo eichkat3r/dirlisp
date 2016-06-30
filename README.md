@@ -1,6 +1,8 @@
 # DirRacket
 ## a directory structure based programming language
 
+MOVED TO https://github.com/eichkat3r/dirlisp.git
+
 ### Intro
 DirRacket is a Lisp dialect which compiles to a directory structure that can later
 be evaluated. The "compiler" and the evaluator are entirely written in plain bash

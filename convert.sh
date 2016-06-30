@@ -3,16 +3,21 @@
 # convert.sh
 # converts an arbitrary arithmetic expression to a directory structure
 
-INPUT=
-OUTPUT="a.out"
+input_file=
+output_dir="a.out"
+console_mode=false
 
-while getopts ":i:o:" OPT; do
+while getopts ":i:o:c" OPT; do
     case $OPT in
     i)
-        INPUT="$OPTARG"
+        input_file="$OPTARG"
         ;;
     o)
-        OUTPUT="$OPTARG"
+        output_dir="$OPTARG"
+        ;;
+    c)
+        # start interactive console
+        console_mode=true
         ;;
     \?)
         echo "Unknown option -$OPTARG" >&2
@@ -25,36 +30,36 @@ while getopts ":i:o:" OPT; do
     esac
 done
 
-if [[ -z $INPUT ]]; then
-    INPUT=$(cat "$@")
+if [[ -z $input_file ]]; then
+    input_file=$(cat "$@")
 fi
 
-if [[ -z $INPUT ]]; then
-    echo "No input specified." >&2
+if [[ -z $input_file ]]; then
+    echo "No input_file specified." >&2
     exit
 fi
 
 set -f
-TOKENS=$(echo $INPUT | grep -o "+\|-\|*\|/\|<=\|>=\|<\|>\|(\|)\|[[:digit:]]*\|[[:alpha:]][[:alnum:]]*")
+tokens=$(echo $input_file | grep -o "+\|-\|*\|/\|<=\|>=\|<\|>\|(\|)\|[\|]\|#[[:digit:]]*\|[[:digit:]]*\|[[:alpha:]][[:alnum:]]*\|#[[:alnum:]]*\|'[[:alnum:]]*")
 unset -f
 
-rm -rf "$OUTPUT"
-mkdir "$OUTPUT"
-cd "$OUTPUT"
+rm -rf "$output_dir"
+mkdir "$output_dir"
+cd "$output_dir"
 
-ID=0
+id=0
 
-LIST=false
+is_list=false
 
 # create an operator directory
 function write_op {
-    mkdir "${ID}_${1}"
-    cd "${ID}_${1}"
-    (( ID++ ))
-    LIST=false
+    mkdir "${id}_${1}"
+    cd "${id}_${1}"
+    (( id++ ))
+    is_list=false
 }
 
-for T in $TOKENS; do
+for T in $tokens; do
     case $T in
     # special char replacement
     "+")
@@ -81,10 +86,10 @@ for T in $TOKENS; do
     ">")
         write_op "gt"
         ;;
-    "(")
-        LIST=true
+    "("|"[")
+        is_list=true
         ;;
-    ")")
+    ")"|"]")
         cd ..
         ;;
     [[:alpha:]][[:alnum:]]*)
@@ -92,15 +97,18 @@ for T in $TOKENS; do
         ;;
     # symbols
     [[:digit:]]*|\'[[:alnum:]]*)
-        if [[ $LIST == true ]]; then
-            mkdir "${ID}_list"
-            cd "${ID}_list"
-            (( ID++ ))
-            LIST=false
+        if [[ $is_list == true ]]; then
+            mkdir "${id}_is_list"
+            cd "${id}_is_list"
+            (( id++ ))
+            is_list=false
         fi
-        touch "${ID}_sym"
-        echo "$T" > "${ID}_sym"
-        (( ID++ ))
+        touch "${id}_sym"
+        echo "$T" > "${id}_sym"
+        (( id++ ))
+        ;;
+    # pointers
+    \#[[:alnum:]]*)
         ;;
     [[:space:]])
         ;;

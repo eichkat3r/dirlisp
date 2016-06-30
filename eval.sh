@@ -4,14 +4,14 @@
 # evaluates a bash arithmetics expression
 
 
-INPUT=
+input_file=
 
 ### handle command line arguments ###
 
-while getopts ":i:" OPT; do
-    case $OPT in
+while getopts ":i:" opt; do
+    case $opt in
     i)
-        INPUT="$OPTARG"
+        input_file="$OPTARG"
         ;;
     \?)
         echo "Unknown option -$OPTARG" >&2
@@ -24,67 +24,67 @@ while getopts ":i:" OPT; do
     esac
 done
 
-if [[ -z $INPUT ]]; then
-    INPUT="$@"
+if [[ -z $input_file ]]; then
+    input_file="$@"
 fi
 
-if [[ -z $INPUT ]]; then
-    echo "$INPUT"
-    echo "No input specified." >&2
+if [[ -z $input_file ]]; then
+    echo "$input_file"
+    echo "No input_file specified." >&2
     exit
 fi
 
 
 
-cd "$INPUT"
+cd "$input_file"
 
 # evaluate the file tree recursively
 function traverse {
     # function takes directory name as argument
-    TL_DIR="$1"
-    cd "$TL_DIR"
+    tl_dir="$1"
+    cd "$tl_dir"
     # split name into id and operator
-    TL_DIR_ID=$(echo "$TL_DIR" | cut -d"_" -f1)
-    TL_DIR_OP=$(echo "$TL_DIR" | cut -d"_" -f2)
+    tl_dir_id=$(echo "$tl_dir" | cut -d"_" -f1)
+    tl_dir_op=$(echo "$tl_dir" | cut -d"_" -f2)
     
-    OPERANDS=()
+    operands=()
     
-    FILES=$(find . -maxdepth 1 -mindepth 1 -printf '%f\n' | sort -n)
+    files=$(find . -maxdepth 1 -mindepth 1 -printf '%f\n' | sort -n)
     
-    for FILE in $FILES; do
-        VALUE=
+    for file in $files; do
+        value=
         
         # directories will be evaluated (recursion)
-        if [[ -d $FILE ]]; then
-            VALUE=$(traverse "$FILE")
+        if [[ -d $file ]]; then
+            value=$(traverse "$file")
         # files = leaves in syntax tree
         else
-            VALUE=$(cat "$FILE")
+            value=$(cat "$file")
         fi
         
-        OPERANDS+=("$VALUE")
+        operands+=("$value")
     done
     
     ### evaluate current directory by folding all values ###
     
-    case $TL_DIR_OP in
+    case $tl_dir_op in
     # number of operands >= 2
     "add"|"sub"|"mul"|"div")
-        RESULT=${OPERANDS[0]}
+        result=${operands[0]}
         
-        for OPERAND in ${OPERANDS[@]:1}; do
-            case $TL_DIR_OP in
+        for OPERAND in ${operands[@]:1}; do
+            case $tl_dir_op in
             "add")
-                RESULT=$(echo "$RESULT+$OPERAND" | bc -l)
+                result=$(echo "$result+$OPERAND" | bc -l)
                 ;;
             "sub")
-                RESULT=$(echo "$RESULT-$OPERAND" | bc -l)
+                result=$(echo "$result-$OPERAND" | bc -l)
                 ;;
             "mul")
-                RESULT=$(echo "$RESULT*$OPERAND" | bc -l)
+                result=$(echo "$result*$OPERAND" | bc -l)
                 ;;
             "div")
-                RESULT=$(echo "$RESULT/$OPERAND" | bc -l)
+                result=$(echo "$result/$OPERAND" | bc -l)
                 ;;
             esac
         done
@@ -92,60 +92,63 @@ function traverse {
     
     # unary operators
     "not")
-        RESULT=$(echo "!${OPERANDS[0]}" | bc -l)
+        result=$(echo "!${operands[0]}" | bc -l)
         ;;
     "sqrt")
-        RESULT=$(echo "sqrt(${OPERANDS[0]})" | bc -l)
+        result=$(echo "sqrt(${operands[0]})" | bc -l)
+        ;;
+    "print")
+        echo "${operands[0]}" >&2
         ;;
     
     # binary operators
     "lte")
-        RESULT=$(echo "${OPERANDS[0]}<=${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}<=${operands[1]}" | bc -l)
         ;;
     "lt")
-        RESULT=$(echo "${OPERANDS[0]}<${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}<${operands[1]}" | bc -l)
         ;;
     "gte")
-        RESULT=$(echo "${OPERANDS[0]}>=${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}>=${operands[1]}" | bc -l)
         ;;
     "gt")
-        RESULT=$(echo "${OPERANDS[0]}>${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}>${operands[1]}" | bc -l)
         ;;
     "eq")
-        RESULT=$(echo "${OPERANDS[0]}==${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}==${operands[1]}" | bc -l)
         ;;
     "or")
-        RESULT=$(echo "${OPERANDS[0]}||${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}||${operands[1]}" | bc -l)
         ;;
     "and")
-        RESULT=$(echo "${OPERANDS[0]}&&${OPERANDS[1]}" | bc -l)
+        result=$(echo "${operands[0]}&&${operands[1]}" | bc -l)
         ;;
     
     # ternary operators
     "if")
-        CONDITION=${OPERANDS[0]}
-        if [[ $CONDITION != "0" ]]; then
-            RESULT="${OPERANDS[1]}"
+        condition=${operands[0]}
+        if [[ $condition != "0" ]]; then
+            result="${operands[1]}"
         else
-            RESULT="${OPERANDS[2]}"
+            result="${operands[2]}"
         fi
         ;;
     
     # lists
     "list")
-        RESULT="${OPERANDS[@]}"
+        result="${operands[@]}"
         ;;
     *)
         ;;
     esac
 
     cd ..
-    echo "$RESULT"
+    echo "$result"
 }
 
 
-DIRS=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort -n)
+dirs=$(find . -maxdepth 1 -mindepth 1 -type d -printf '%f\n' | sort -n)
 
-for DIR in $DIRS; do
-    traverse $DIR
+for dir in $dirs; do
+    traverse $dir
 done
